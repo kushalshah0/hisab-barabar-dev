@@ -1,0 +1,53 @@
+version: 2.1
+
+executors:
+  android:
+    docker:
+      - image: cimg/android:2024.01-node
+    resource_class: large
+    environment:
+      APP_DIR: mobile-app
+      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" -Dorg.gradle.daemon=false'
+
+commands:
+  setup-android:
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: cd $APP_DIR && npm ci
+      - run:
+          name: Prebuild
+          command: cd $APP_DIR && npx expo prebuild --platform android --no-install
+      - run:
+          name: Set SDK path
+          command: echo "sdk.dir=$ANDROID_HOME" > $APP_DIR/android/local.properties
+
+jobs:
+  build-dev:
+    executor: android
+    steps:
+      - setup-android
+      - run:
+          name: Build dev APK
+          command: cd $APP_DIR/android && ./gradlew assembleDebug
+      - store_artifacts:
+          path: mobile-app/android/app/build/outputs/apk/debug
+          destination: dev-apk
+
+  build-release:
+    executor: android
+    steps:
+      - setup-android
+      - run:
+          name: Build release APK
+          command: cd $APP_DIR/android && ./gradlew assembleRelease
+      - store_artifacts:
+          path: mobile-app/android/app/build/outputs/apk/release
+          destination: release-apk
+
+workflows:
+  build:
+    jobs:
+      - build-dev
+      - build-release
