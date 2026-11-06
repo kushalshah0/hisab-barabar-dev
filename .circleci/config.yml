@@ -24,15 +24,14 @@ commands:
       - run:
           name: Tune Gradle memory
           command: |
-            echo "" >> $APP_DIR/android/gradle.properties
-            cat >> $APP_DIR/android/gradle.properties <<'EOF'
-            org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
-            org.gradle.daemon=false
-            org.gradle.parallel=false
-            org.gradle.workers.max=2
-            kotlin.compiler.execution.strategy=in-process
-            reactNativeArchitectures=arm64-v8a
-            EOF
+            F=$APP_DIR/android/gradle.properties
+            echo "" >> $F
+            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m" >> $F
+            echo "org.gradle.daemon=false" >> $F
+            echo "org.gradle.parallel=false" >> $F
+            echo "org.gradle.workers.max=2" >> $F
+            echo "kotlin.compiler.execution.strategy=in-process" >> $F
+            echo "reactNativeArchitectures=arm64-v8a" >> $F
 
 jobs:
   build-dev:
