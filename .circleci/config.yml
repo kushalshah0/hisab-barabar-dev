@@ -7,7 +7,6 @@ executors:
     resource_class: large
     environment:
       APP_DIR: mobile-app
-      GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" -Dorg.gradle.daemon=false'
 
 commands:
   setup-android:
@@ -22,6 +21,18 @@ commands:
       - run:
           name: Set SDK path
           command: echo "sdk.dir=$ANDROID_HOME" > $APP_DIR/android/local.properties
+      - run:
+          name: Tune Gradle memory
+          command: |
+            echo "" >> $APP_DIR/android/gradle.properties
+            cat >> $APP_DIR/android/gradle.properties <<'EOF'
+            org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m
+            org.gradle.daemon=false
+            org.gradle.parallel=false
+            org.gradle.workers.max=2
+            kotlin.compiler.execution.strategy=in-process
+            reactNativeArchitectures=arm64-v8a
+            EOF
 
 jobs:
   build-dev:
@@ -41,6 +52,8 @@ jobs:
       - setup-android
       - run:
           name: Build release APK
+          environment:
+            NODE_ENV: production
           command: cd $APP_DIR/android && ./gradlew assembleRelease
       - store_artifacts:
           path: mobile-app/android/app/build/outputs/apk/release
